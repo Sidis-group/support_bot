@@ -21,7 +21,7 @@ FIREBASE_CERTIFICATE_PATH=шлях до сертифікату для firebase(�
 
 Потім виконати команду
 
-```docker-compose up```
+```docker-compose start```
 
 і бот запуститься
 

@@ -134,3 +134,7 @@ class MailingMessage(models.Model):
             'photo_id': self.photo_id,
             'created_time': self.created_time,
         }
+
+class Admin(models.Model):
+    
+    telegram_id = models.BigIntegerField(unique=True, primary_key=True)

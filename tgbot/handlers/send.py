@@ -143,6 +143,7 @@ def register_send_handlers(dp: Dispatcher):
     dp.register_message_handler(
         send_handler,
         commands=['send'],
+        is_admin=True,
     )
     dp.register_callback_query_handler(
         send_handler,

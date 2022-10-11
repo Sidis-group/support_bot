@@ -56,10 +56,8 @@ async def delete_operator(
     if operator_telegram_id in config.tg_bot.admin_ids:
         await call.bot.set_my_commands(
             commands=[
-                BotCommand(command="/start", description=messages.start_command),
                 BotCommand(command="/send", description=messages.send_command),
                 BotCommand(command='/menu', description=messages.menu_command),
-                BotCommand(command='/favorites', description=messages.favorites_command),
             ],
             scope=BotCommandScope(chat_id=call.from_user.id, type='chat')
         )

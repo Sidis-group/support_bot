@@ -145,3 +145,14 @@ def delete_mailing_message(id: int) -> schemas.MailingMessage:
 def get_mailing_message(id: int) -> schemas.MailingMessage:
     mailing_message: models.MailingMessage = models.MailingMessage.objects.get(id=id)
     return schemas.MailingMessage(**mailing_message.dict())
+
+@sync_to_async
+def add_admin(telegram_id: int):
+    models.Admin.objects.create(telegram_id=telegram_id)
+
+@sync_to_async
+def get_admins_ids() -> list[int]:
+    return list(
+        admin.telegram_id \
+            for admin in models.Admin.objects.all()
+    )

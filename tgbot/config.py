@@ -1,16 +1,25 @@
+import asyncio
+from asgiref.sync import sync_to_async
 from dataclasses import dataclass
-from pathlib import Path
 
 from environs import Env
+
+from tgbot.services.db import get_admins_ids
 
 
 @dataclass
 class TgBot:
     token: str
-    admin_ids: list[int]
+    deeplink_key: str
+    name: str
     webhook_url: str
     webhook_host: str
     webhook_port: int
+    admin_ids: list[int] = None
+
+    async def set_admins_ids(self):
+        self.admin_ids = await get_admins_ids()
+
 
     @property
     def webhook_path(self):
@@ -41,7 +50,8 @@ def load_config(path: str = None):
     return Config(
         tg_bot=TgBot(
             token=env.str("BOT_TOKEN"),
-            admin_ids=list(map(int, env.list("ADMINS"))),
+            deeplink_key=env.str("DEEPLINK_KEY"),
+            name=env.str("BOT_NAME"),
             webhook_url=env.str("WEBHOOK_URL"),
             webhook_host=env.str("WEBHOOK_HOST"),
             webhook_port=env.int("WEBHOOK_PORT"),

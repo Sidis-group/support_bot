@@ -16,6 +16,7 @@ from tgbot.services import db, firebase
 from tgbot.config import load_config, Config
 from tgbot.filters.operator import OperatorFilter
 from tgbot.handlers.send import register_send_handlers
+from tgbot.filters.admin_deep_link import AdminDeepLink
 from tgbot.handlers.start import register_start_handlers
 from tgbot.handlers.errors import register_error_handlers
 from tgbot.handlers.system import register_system_handlers
@@ -51,6 +52,7 @@ def register_all_filters(dp: Dispatcher):
     dp.filters_factory.bind(AdminFilter)
     dp.filters_factory.bind(OperatorFilter)
     dp.filters_factory.bind(OperatorDeepLink)
+    dp.filters_factory.bind(AdminDeepLink)
 
 
 def register_all_handlers(dp: Dispatcher):
@@ -130,14 +132,15 @@ async def on_startup(dp: Dispatcher):
     messages = firebase.get_custom_messages()
 
     bot['config'] = config
+    await config.tg_bot.set_admins_ids()
     bot['messages'] = messages
     register_all_middlewares(dp, config, storage, scheduler, messages)
     register_all_filters(dp)
     register_all_handlers(dp)
 
-    await set_commands_to_bot(bot)
     await set_commands_to_operators(bot)
     await set_commands_to_admins(bot)
+    await set_commands_to_bot(bot)
     await dp.bot.set_webhook(
         config.tg_bot.webhook_main_url
     )

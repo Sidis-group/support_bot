@@ -11,13 +11,31 @@ services:
     working_dir: "/usr/src/app/bot"
     volumes:
     - .:/usr/src/app/bot
-    command: python3 -m bot
+    command: python3 bot.py
+    ports:
+      - 8000:8000
     restart: always
     env_file:
       - ".env"
     networks:
     - tg_bot
 
+  db:
+    container_name: db
+    hostname: db
+    image: postgres:12.2
+
+    environment:
+      - POSTGRES_DB=$DB_NAME
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PASS
+    restart: always
+    networks:
+      - tg_bot
+    env_file:
+      - ".env"
+    volumes:
+      - ./postgres:/var/lib/postgresql
   # nginx:
   #   image: nginx:1.21.6
   #   container_name: nginx

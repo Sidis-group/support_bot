@@ -12,9 +12,12 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 
 from pathlib import Path
 
+from web.config import load_db_config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+db_config = load_db_config()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -76,8 +79,12 @@ WSGI_APPLICATION = 'web.web.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': db_config.database,
+        'PASSWORD': db_config.password,
+        'USER': db_config.user,
+        'HOST': db_config.host,
+        'PORT': 5432,
     }
 }
 

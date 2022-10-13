@@ -1,4 +1,5 @@
 import sys
+import os
 import asyncio
 import logging
 
@@ -127,6 +128,10 @@ async def on_startup(dp: Dispatcher):
 
     logger.info("Starting bot")
     config = load_config(".env")
+    logger.info('Making migrations')
+    os.popen('python3 django_manage.py makemigrations')
+    logger.info('Applying migrations')
+    os.system('python3 django_manage.py migrate')
 
     scheduler = AsyncIOScheduler()
     messages = firebase.get_custom_messages()

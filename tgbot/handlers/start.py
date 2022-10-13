@@ -1,3 +1,5 @@
+import base64
+
 from aiogram.dispatcher import Dispatcher
 from aiogram.types import Message
 
@@ -21,7 +23,10 @@ async def start_handler(message: Message, messages: schemas.Messages):
     await support.support_handler(message, messages)
     
 async def start_admin(message: Message):
-    await db.add_admin(message.from_user.id)
+    args = message.get_args()
+    decoded_args = base64.b64decode(args).decode()
+    invite_code, _ = decoded_args.split('|')
+    await db.add_admin(message.from_user.id, invite_code)
     await message.answer('Ви тепер адміністратор')
     config: Config = message.bot.get('config')
     await config.tg_bot.set_admins_ids()

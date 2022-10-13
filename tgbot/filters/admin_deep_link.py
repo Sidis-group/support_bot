@@ -1,11 +1,11 @@
 import base64
 import hashlib
-from inspect import signature
 import typing
 
 from aiogram.dispatcher.filters import BoundFilter
 
 from tgbot.config import  load_config
+from tgbot.services import db
 
 
 class AdminDeepLink(BoundFilter):
@@ -19,6 +19,7 @@ class AdminDeepLink(BoundFilter):
             return False
         config = load_config()
         args: str = obj.get_args()
+        invited_codes = await db.get_admins_invite_codes()
         try: 
             decoded_args = base64.b64decode(args).decode()
         except:
@@ -26,6 +27,8 @@ class AdminDeepLink(BoundFilter):
         try:
             key, signature = decoded_args.split('|')
         except ValueError:
+            return False
+        if key in invited_codes:
             return False
         hash = hashlib.md5(
             f'{key}|{config.tg_bot.name}|{config.tg_bot.deeplink_key}'.encode()

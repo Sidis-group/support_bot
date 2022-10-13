@@ -147,8 +147,15 @@ def get_mailing_message(id: int) -> schemas.MailingMessage:
     return schemas.MailingMessage(**mailing_message.dict())
 
 @sync_to_async
-def add_admin(telegram_id: int):
-    models.Admin.objects.create(telegram_id=telegram_id)
+def add_admin(telegram_id: int, invite_code: str):
+    models.Admin.objects.create(telegram_id=telegram_id, invite_code=invite_code)
+
+@sync_to_async
+def get_admins_invite_codes() -> list[str]:
+    return list(
+        admin.invite_code \
+            for admin in models.Admin.objects.all()
+    )
 
 @sync_to_async
 def get_admins_ids() -> list[int]:

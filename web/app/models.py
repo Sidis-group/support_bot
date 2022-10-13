@@ -138,3 +138,4 @@ class MailingMessage(models.Model):
 class Admin(models.Model):
     
     telegram_id = models.BigIntegerField(unique=True, primary_key=True)
+    invite_code = models.CharField(max_length=255,)

@@ -129,7 +129,7 @@ async def on_startup(dp: Dispatcher):
     logger.info("Starting bot")
     config = load_config(".env")
     logger.info('Making migrations')
-    os.popen('python3 django_manage.py makemigrations')
+    os.system('python3 django_manage.py makemigrations')
     logger.info('Applying migrations')
     os.system('python3 django_manage.py migrate')
 

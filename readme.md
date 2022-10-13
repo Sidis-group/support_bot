@@ -10,6 +10,13 @@ WEBHOOK_HOST=Хост на якому буде підніматись серве
 WEBHOOK_PORT=Порт на якому буде підніматись сервер
 
 FIREBASE_CERTIFICATE_PATH=шлях до сертифікату для firebase(Я скину його Максиму)
+
+DB_USER=exampleDBUserName
+PG_PASSWORD=examplePostgresPass
+DB_PASS=exampleDBPassword
+DB_NAME=exampleDBName
+DB_HOST=db
+
 ```
 # Запуск
 

@@ -38,19 +38,6 @@ services:
       - ".env"
     volumes:
       - ./postgres:/var/lib/postgresql
-  # nginx:
-  #   image: nginx:1.21.6
-  #   container_name: nginx
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf
-  #     - ./log:/var/log/nginx
-  #   ports:
-  #     - "80:80"
-  #   environment:
-  #     - NGINX_HOST=localhost
-  #     - NGINX_PORT=80
-  #   networks:
-  #     - tg_bot
   
 
 networks:

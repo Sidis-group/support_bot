@@ -31,5 +31,3 @@ DB_HOST=db
 ```docker-compose start```
 
 і бот запуститься
-
-P.S. Якщо юзаєте nginx то в             ```docker-compose.yml``` є налаштування для nginx(можливо треба буде там шось підправити)

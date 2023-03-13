@@ -6,6 +6,8 @@ __pycache__/
 # C extensions
 *.so
 
+firebase.json
+web/app/migrations/*
 # Distribution / packaging
 .Python
 build/
@@ -62,3 +64,4 @@ venv.bak/
 .idea/*
 .env
 firebase_certificate.json
+log/bot/bot.log

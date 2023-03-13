@@ -1,7 +1,7 @@
 import asyncio
 import re
 
-from aiogram.types import Message, CallbackQuery, ContentTypes
+from aiogram.types import Message, CallbackQuery, ContentTypes, ChosenInlineResult, InlineQuery, InlineQueryResultArticle, InputTextMessageContent, Chat
 from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.utils.exceptions import CantInitiateConversation, BotBlocked
 
@@ -11,15 +11,37 @@ from tgbot.misc import userfull
 from tgbot.keyboards import inline
 
 
-async def choose_mode(message: Message, state: FSMContext):
-    await message.delete()
+async def select_user(query: InlineQuery):
+    if query.query:
+        users = await db.search_telegram_user(query.query)
+    else:
+        users = await db.get_telegram_users()
 
-    await message.answer(
-        text="Оберіть кому надсилати",
-        reply_markup=inline.send_mode
+    results = [
+        InlineQueryResultArticle(
+            id=user.telegram_id,
+            title=user.full_name,
+            input_message_content=InputTextMessageContent(
+                message_text=user.telegram_id,
+            )
+        )
+        for user in users
+    ]
+
+    await query.answer(results)
+
+
+async def set_user(result: ChosenInlineResult, state: FSMContext):
+    await state.update_data(user_id=result.result_id)
+    message_to_delete = await result.bot.send_message(
+        chat_id=result.from_user.id,
+        text='Напишіть ваше повідомлення',
+        reply_markup=inline.cancel_markup,
     )
-
-
+    await state.set_state('uget_message_to_send')
+    await state.update_data(message_to_delete=message_to_delete.message_id)
+    
+    
 async def send_handler(message: Message | CallbackQuery, state: FSMContext):
     if isinstance(message, CallbackQuery):
         await message.answer()
@@ -29,7 +51,7 @@ async def send_handler(message: Message | CallbackQuery, state: FSMContext):
         text='Напишіть ваше повідомлення',
         reply_markup=inline.cancel_markup,
     )
-    await state.set_state('get_message_to_send')
+    await state.set_state('uget_message_to_send')
     await state.update_data(message_to_delete=message_to_delete.message_id)
 
 
@@ -37,6 +59,7 @@ async def send_handler(message: Message | CallbackQuery, state: FSMContext):
 async def get_message_to_send(message: Message, state: FSMContext):
     state_data = await state.get_data()
     await state.finish()
+    await state.update_data(user_id=state_data["user_id"])
     message_photo = message.photo
     message_text_without_links = re.sub(r'<a[^<]+</a>', '', message.parse_entities()) 
     buttons_data = re.findall(r'<a .+"(.+)">(.+)</a>', message.parse_entities())
@@ -62,9 +85,9 @@ async def get_message_to_send(message: Message, state: FSMContext):
                 f'{buttons_message}'
                 '-----------------------------\n'
                 '<b>Ви підтверджуєте надсилання '
-                'повідомлення усім користувачам?</b>'
+                'повідомлення?</b>'
             ),
-            reply_markup=inline.confirm_mailing_message(mailing_message.id),
+            reply_markup=inline.confirm_mailing_message_user(mailing_message.id),
         )
     else: 
         await message.answer_photo(
@@ -73,36 +96,34 @@ async def get_message_to_send(message: Message, state: FSMContext):
                 f'{message_text_without_links}\n\n'
                 '-----------------------------\n'
                 '<b>Ви підтверджуєте надсилання '
-                'повідомлення усім користувачам?</b>'
+                'повідомлення?</b>'
             ),
-            reply_markup=inline.confirm_mailing_message(mailing_message.id)
+            reply_markup=inline.confirm_mailing_message_user(mailing_message.id)
         )
 
 
 async def send_message_to_users(
     call: CallbackQuery,
     dp: Dispatcher,
+    state: FSMContext,
     callback_data: dict,
     ):
     message_id_to_send = int(callback_data['id'])
+    state_data = await state.get_data()
     mailing_message = await db.get_mailing_message(message_id_to_send)
     await call.message.delete()
     message = await call.message.answer( 
         text='Починаю розсилку',
     )
-    users: list[schemas.TelegramUser] = await db.get_telegram_users()
     await mailing(
         dp=dp,
-        users_ids=[user.telegram_id for user in users],
+        users_ids=[state_data["user_id"]],
         mailing_message=mailing_message,
     )
+ 
     await message.edit_text(
         text='Розсилка завершена',
     )
-
-async def close(call: CallbackQuery, state: FSMContext):
-    await state.finish()
-    await call.message.delete()
 
 async def mailing(
     dp: Dispatcher,
@@ -141,33 +162,25 @@ async def mailing(
             result['failed'].append(user_id)
             continue
         result['success'].append(user_id)
- 
 
-def register_send_handlers(dp: Dispatcher):
+def register_send_message_to_user_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(
-        close,
-        text='cancel',
-        state='*'
+        send_handler,
+        text='uback_to_enter_message',
     )
-    dp.register_message_handler(
-        choose_mode,
-        commands=["send"],
+    dp.register_chosen_inline_handler(
+        set_user
+    )
+    dp.register_inline_handler(
+        select_user,
         is_admin=True,
-    )
-    dp.register_callback_query_handler(
-        send_handler,
-        text="all"
-    )
-    dp.register_callback_query_handler(
-        send_handler,
-        text='back_to_enter_message',
     )
     dp.register_message_handler(
         get_message_to_send,
-        state='get_message_to_send',
+        state='uget_message_to_send',
         content_types=ContentTypes.ANY,
     )
     dp.register_callback_query_handler(
         send_message_to_users,
-        inline.mailing_message_callback.filter(),
+        inline.mailing_message_user_callback.filter(),
     )

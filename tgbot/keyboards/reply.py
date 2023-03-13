@@ -25,3 +25,24 @@ stop_support_dialog_kb = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True
 )
+
+
+def fast_responses_kb(responses: list) -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [
+                KeyboardButton(
+                    text='❗️Зупинити діалог❗️',
+                ),
+ 
+            ],
+            *[
+            [
+                KeyboardButton(
+                    text=response.text
+                )
+            ] for response in responses
+            ]
+        ],
+        resize_keyboard=True
+    )

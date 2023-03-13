@@ -1,6 +1,5 @@
-import asyncio
-from asgiref.sync import sync_to_async
 from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
 
 from environs import Env
 
@@ -17,8 +16,14 @@ class TgBot:
     webhook_port: int
     admin_ids: list[int] = None
 
-    async def set_admins_ids(self):
-        self.admin_ids = await get_admins_ids()
+    def set_admins_ids(self):
+        if self.admin_ids is None:
+            self.admin_ids = []
+        executor = ThreadPoolExecutor(1)
+        future = executor.submit(get_admins_ids)
+        admins_ids = future.result()
+        self.admin_ids.extend(admins_ids)
+        self.admin_ids = list(map(int, self.admin_ids))
 
 
     @property
@@ -47,10 +52,11 @@ def load_config(path: str = None):
     env = Env()
     env.read_env(path)
     
-    return Config(
+    config =  Config(
         tg_bot=TgBot(
             token=env.str("BOT_TOKEN"),
             deeplink_key=env.str("DEEPLINK_KEY"),
+            admin_ids=env.list("ADMINS"),
             name=env.str("BOT_NAME"),
             webhook_url=env.str("WEBHOOK_URL"),
             webhook_host=env.str("WEBHOOK_HOST"),
@@ -60,4 +66,6 @@ def load_config(path: str = None):
             firebase_certificate_path=env.str("FIREBASE_CERTIFICATE_PATH"),
         ),
     )
+    config.tg_bot.set_admins_ids()
+    return config
     

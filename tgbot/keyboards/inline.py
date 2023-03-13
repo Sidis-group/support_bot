@@ -21,7 +21,7 @@ def confirm_support_request_markup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(
-                    text='Confirm',
+                    text='Підтвердити',
                     callback_data=confirm_support_request_callback.new(
                         id=support_request_id,
                     )
@@ -54,9 +54,36 @@ def confirm_mailing_message(
             ]
         ]
     )
+
+mailing_message_user_callback = CallbackData('mailing_message_user', 'id')
+def confirm_mailing_message_user(
+    message_id: int
+    ) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text='✅Надіслати',
+                    callback_data=mailing_message_user_callback.new(
+                        id=message_id,
+                    )
+                )
+            ],
+            [
+                
+                InlineKeyboardButton(
+                    text='⬅️',
+                    callback_data='uback_to_enter_message'
+                ),
+                cancel_button,
+            ]
+        ]
+    )
+ 
     
 
 operator_navigation_callback = CallbackData('operator_navigation', 'page')
+fast_response_navigation_callback = CallbackData('f_resp_navigation', 'page')
 operators_menu_markup = InlineKeyboardMarkup(
     inline_keyboard=[
         [
@@ -69,8 +96,23 @@ operators_menu_markup = InlineKeyboardMarkup(
         ],
         [
             InlineKeyboardButton(
-                text='➕ Додати оператора➕',
+                text='➕ Додати оператора ➕',
                 callback_data='add_operator',
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text='📜Переглянути швидкі відповіді📜',
+                callback_data=fast_response_navigation_callback.new(
+                    page=0,
+                )
+            )
+        ],
+ 
+        [
+            InlineKeyboardButton(
+                text='➕ Додати швидку відповідь ➕',
+                callback_data="add_fast_response"
             )
         ],
         [cancel_button]
@@ -103,6 +145,34 @@ def page_navigation_for_operators_markup(
         cancel_button
     )
     return markup
+
+fast_response_callback = CallbackData('fast_response', 'id')
+def page_navigation_for_fast_responses_markup(
+    responses: list[schemas.FastResponse], page: int
+) -> InlineKeyboardMarkup:
+    COLUMN_LENTH = 5
+    markup = InlineKeyboardMarkup()
+    start = page * COLUMN_LENTH
+    end = start + COLUMN_LENTH
+    for response in responses[start:end]:
+        markup.add(
+            InlineKeyboardButton(
+                text=f'{response.text}',
+                callback_data=fast_response_callback.new(id=response.id),
+            )
+        )
+    markup = add_navigation_buttons(
+        markup, page, COLUMN_LENTH, len(responses), fast_response_navigation_callback
+        )
+    markup.add(
+        InlineKeyboardButton(
+            text='⬅',
+            callback_data='operators_menu',
+        ),
+        cancel_button
+    )
+    return markup
+ 
     
 def add_navigation_buttons(
     markup: InlineKeyboardMarkup, page: int, column_lenth: int, total_items: int,
@@ -310,3 +380,46 @@ def parse_buttons(message: str):
             ] for url, text in buttons
         ]
     )
+
+delete_fast_response_callback = CallbackData('delete_fr', 'id')
+def delete_fast_response_markup(response_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text='❌ Видалити ❌',
+                    callback_data=delete_fast_response_callback.new(
+                        id=response_id
+                    ),
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text='⬅',
+                    callback_data=fast_response_navigation_callback.new(
+                        page=0
+                    ),
+                ),
+                cancel_button
+            ]
+        ]
+    )
+
+
+send_mode = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="Всім",
+                callback_data="all",
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Певному користувачу",
+                switch_inline_query_current_chat="",
+            )
+        ],[cancel_button]
+
+    ]
+)

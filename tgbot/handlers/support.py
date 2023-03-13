@@ -1,9 +1,8 @@
 from aiogram.bot import Bot
 from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.types import Message, CallbackQuery, ContentType
-from aiogram.utils import markdown
+from aiogram.utils import markdown, exceptions
 
-from tgbot.config import Config
 from tgbot.keyboards import inline, reply
 from tgbot.misc import schemas
 from tgbot.services import db
@@ -55,23 +54,46 @@ async def confirm_support_request_handler(
     await db.delete_support_request(int(callback_data['id']))
     # inviter - хто запитував підтримку
     # invitee - хто підтвердив запит
-    await set_state_to_support_dialog(
-        dp=dp,
-        inviter_telegram_id=support_request.user_id,
-        invitee_telegram_id=call.from_user.id,
+    try:
+        await set_state_to_support_dialog(
+            dp=dp,
+            inviter_telegram_id=support_request.user_id,
+            invitee_telegram_id=call.from_user.id,
+        )
+        fast_responses = await db.get_fast_responses()
+        operator_kb = reply.fast_responses_kb(fast_responses)
+        await call.bot.send_message(
+            chat_id=support_request.user_id,
+            text=messages.start_chat_text,
+            reply_markup=reply.stop_support_dialog_kb,
+        )
+        await call.bot.send_message(
+            chat_id=call.from_user.id,
+            text=(
+                'Діалог з користувачем почався. '
+            ),
+            reply_markup=operator_kb,
+        )
+    except exceptions.BotBlocked:
+        await clear_states(dp, support_request.user_id, call.from_user.id)
+
+async def clear_states(
+    dp: Dispatcher, 
+    inviter_telegram_id: int,
+    invitee_telegram_id: int,
+    ):
+    inviter_state = dp.current_state(
+        user=inviter_telegram_id,
+        chat=inviter_telegram_id,
     )
-    await call.bot.send_message(
-        chat_id=support_request.user_id,
-        text=messages.start_chat_text,
-        reply_markup=reply.stop_support_dialog_kb,
+    invitee_state = dp.current_state(
+        user=invitee_telegram_id,
+        chat=invitee_telegram_id,
     )
-    await call.bot.send_message(
-        chat_id=call.from_user.id,
-        text=(
-            'Діалог з користувачем почався. '
-        ),
-        reply_markup=reply.stop_support_dialog_kb,
-    )
+    await invitee_state.finish()
+    await inviter_state.finish()
+ 
+
 
 async def set_state_to_support_dialog(
     dp: Dispatcher, 
@@ -178,12 +200,14 @@ async def start_dialog_from_operator_to_user(
         text=messages.start_chat_text,
         reply_markup=reply.stop_support_dialog_kb,
     )
+    fast_responses = await db.get_fast_responses()
+    operator_kb = reply.fast_responses_kb(fast_responses)
     await call.bot.send_message(
         chat_id=call.from_user.id,
         text=(
             'Діалог з користувачем почався. '
         ),
-        reply_markup=reply.stop_support_dialog_kb,
+        reply_markup=operator_kb,
     )
 def register_support_handlers(dp: Dispatcher):
     dp.register_message_handler(

@@ -8,6 +8,7 @@ from aiogram.types import BotCommand, BotCommandScope
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from aiogram.contrib.fsm_storage.redis import RedisStorage2
+from aiogram.utils.exceptions import ChatNotFound
 from aiogram.utils.executor import start_webhook
 
 from tgbot.misc.setup_django import setup_django; setup_django()
@@ -21,6 +22,7 @@ from tgbot.filters.admin_deep_link import AdminDeepLink
 from tgbot.handlers.start import register_start_handlers
 from tgbot.handlers.errors import register_error_handlers
 from tgbot.handlers.system import register_system_handlers
+from tgbot.handlers.add_fast_response import register_add_fast_response_handlers
 from tgbot.handlers.support import register_support_handlers
 from tgbot.filters.operator_deep_link import OperatorDeepLink
 from tgbot.middlewares.environment import EnvironmentMiddleware
@@ -28,6 +30,8 @@ from tgbot.handlers.favorites import register_favorites_handlers
 from tgbot.handlers.add_operator import register_add_operator_handlers
 from tgbot.handlers.operators_menu import register_operators_menu_handlers
 from tgbot.handlers.manage_operators import register_manage_operators_handlers
+from tgbot.handlers.manage_fast_responses import register_manage_fast_responses_handlers
+from tgbot.handlers.send_message_to_user import register_send_message_to_user_handlers
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +69,9 @@ def register_all_handlers(dp: Dispatcher):
     register_error_handlers(dp)
     register_operators_menu_handlers(dp)
     register_manage_operators_handlers(dp)
+    register_add_fast_response_handlers(dp)
+    register_manage_fast_responses_handlers(dp)
+    register_send_message_to_user_handlers(dp)
     register_system_handlers(dp)
 
 async def set_commands_to_bot(bot: Bot):
@@ -94,23 +101,26 @@ async def set_commands_to_admins(bot: Bot):
     operators: list[schemas.Operator] = await db.get_operators()
     operators_ids = [operator.telegram_id for operator in operators]
     for admin_id in config.tg_bot.admin_ids:
-        if admin_id not in operators_ids:
-            await bot.set_my_commands(
-                commands=[
-                    BotCommand(command="/send", description=messages.send_command),
-                    BotCommand(command='/menu', description=messages.menu_command),
-                ],
-                scope=BotCommandScope(chat_id=admin_id, type='chat')
-            )
-        else:
-            await bot.set_my_commands(
-                commands=[
-                    BotCommand(command="/send", description=messages.send_command),
-                    BotCommand(command='/menu', description=messages.menu_command),
-                    BotCommand(command='/favorites', description=messages.favorites_command),
-                ],
-                scope=BotCommandScope(chat_id=admin_id, type='chat')
-            )
+        try:
+            if admin_id not in operators_ids:
+                await bot.set_my_commands(
+                    commands=[
+                        BotCommand(command="/send", description=messages.send_command),
+                        BotCommand(command='/menu', description=messages.menu_command),
+                    ],
+                    scope=BotCommandScope(chat_id=admin_id, type='chat')
+                )
+            else:
+                await bot.set_my_commands(
+                    commands=[
+                        BotCommand(command="/send", description=messages.send_command),
+                        BotCommand(command='/menu', description=messages.menu_command),
+                        BotCommand(command='/favorites', description=messages.favorites_command),
+                    ],
+                    scope=BotCommandScope(chat_id=admin_id, type='chat')
+                )
+        except ChatNotFound:
+            pass
 
 async def on_startup(dp: Dispatcher):
     formatter = logging.Formatter(
@@ -137,7 +147,6 @@ async def on_startup(dp: Dispatcher):
     messages = firebase.get_custom_messages()
 
     bot['config'] = config
-    await config.tg_bot.set_admins_ids()
     bot['messages'] = messages
     register_all_middlewares(dp, config, storage, scheduler, messages)
     register_all_filters(dp)

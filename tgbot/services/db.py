@@ -21,6 +21,14 @@ def get_telegram_users() -> schemas.TelegramUser:
     )
 
 @sync_to_async
+def search_telegram_user(query: str) -> list[schemas.TelegramUser]:
+    return [
+        schemas.TelegramUser(**user) 
+        for user in models.TelegramUser.objects.filter(
+            full_name__icontains=query).values()
+    ]
+
+@sync_to_async
 def get_telegram_user(telegram_id: int) -> schemas.TelegramUser:
     return schemas.TelegramUser(
         **models.TelegramUser.objects.get(telegram_id=telegram_id).dict()
@@ -157,9 +165,31 @@ def get_admins_invite_codes() -> list[str]:
             for admin in models.Admin.objects.all()
     )
 
-@sync_to_async
 def get_admins_ids() -> list[int]:
     return list(
         admin.telegram_id \
             for admin in models.Admin.objects.all()
     )
+
+@sync_to_async
+def get_fast_responses() -> list[schemas.FastResponse]:
+    return [
+        schemas.FastResponse(**response.dict()) 
+        for response in models.FastResponse.objects.all()
+    ]
+
+@sync_to_async
+def add_fast_response(text: str) -> None:
+    models.FastResponse.objects.create(text=text)
+
+@sync_to_async
+def delete_fast_response(response_id: int) -> None:
+    resp = models.FastResponse.objects.get(id=response_id)
+    s = schemas.FastResponse(**resp.dict())
+    resp.delete()
+    return s
+
+@sync_to_async
+def get_fast_response(response_id: int) -> schemas.FastResponse:
+    resp = models.FastResponse.objects.get(id=response_id)
+    return schemas.FastResponse(**resp.dict())

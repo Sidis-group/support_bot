@@ -40,3 +40,6 @@ class MailingMessage(BaseModel):
     created_time: datetime.datetime
     photo_id: str | None = None
     
+class FastResponse(BaseModel):
+    id: int
+    text: str

@@ -33,7 +33,7 @@ class TgBot:
     
     @property
     def webhook_main_url(self):
-        return f'{self.webhook_url}'
+        return f'{self.webhook_url}{self.webhook_path}'
 
 
 @dataclass

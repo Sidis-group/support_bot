@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import urlparse
 
 from environs import Env
 
@@ -28,7 +29,8 @@ class TgBot:
 
     @property
     def webhook_path(self):
-        return f'/bot/{self.token}'
+        path = urlparse(self.webhook_url).path
+        return f'{path}/bot/{self.token}'
     
     @property
     def webhook_main_url(self):

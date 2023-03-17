@@ -29,13 +29,11 @@ class TgBot:
 
     @property
     def webhook_path(self):
-        path = urlparse(self.webhook_url).path
-        return f'{path}/bot/{self.token}'
+        return f'/bot/{self.token}'
     
     @property
     def webhook_main_url(self):
-        host = urlparse(self.webhook_url).hostname
-        return f'https://{host}'
+        return f'https://{self.webhook_url}'
 
 
 @dataclass

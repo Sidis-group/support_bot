@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 firebase.json
-log/*
+log/**
 web/app/migrations/*
 # Distribution / packaging
 .Python

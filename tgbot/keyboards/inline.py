@@ -423,3 +423,14 @@ send_mode = InlineKeyboardMarkup(
 
     ]
 )
+
+connect_opeartor = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="✅ Підключити оператора",
+                callback_data="connect_operator",
+            )
+        ]
+    ]
+)

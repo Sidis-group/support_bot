@@ -24,6 +24,26 @@ async def support_handler(message: Message, messages: schemas.Messages):
         support_request=support_request,
     )
 
+async def support_handler_call(call: CallbackQuery, messages: schemas.Messages):
+    support_request: schemas.SupportRequest = await db.add_support_request(
+        user_telegram_id=call.from_user.id,
+    )
+    await send_request_to_operators(
+        bot=call.bot,
+        text=(
+            'Новий запит на підтримку від '
+            f'{markdown.hbold(call.from_user.full_name)} '
+            'з ID: '
+            f'{markdown.hcode(call.from_user.id)} \n'
+            f'ID Запиту: {markdown.hcode(support_request.id)} \n'
+        ),
+        support_request=support_request,
+    )
+    await call.message.edit_text(
+        text="Запит відправлено, очікуйте"
+    )
+
+
 async def send_request_to_operators(
     bot: Bot,
     text: str,
@@ -229,10 +249,23 @@ async def start_dialog_from_operator_to_user(
         ),
         reply_markup=reply.stop_support_dialog_kb,
     )
+
+
+async def need_operator(message: Message) -> None:
+    await message.delete()
+    await message.answer(
+        text="Бажаєте підключити оператора?",
+        reply_markup=inline.connect_opeartor
+    )
+        
 def register_support_handlers(dp: Dispatcher):
     dp.register_message_handler(
         support_handler,
         commands=['support'],
+    )
+    dp.register_callback_query_handler(
+        support_handler_call,
+        text="connect_operator",
     )
     dp.register_callback_query_handler(
         confirm_support_request_handler,
@@ -251,4 +284,9 @@ def register_support_handlers(dp: Dispatcher):
     dp.register_callback_query_handler(
         start_dialog_from_operator_to_user,
         inline.start_dialog_callback.filter(),
+    )
+    dp.register_message_handler(
+        need_operator,
+        is_admin=False,
+        is_operator=False,
     )

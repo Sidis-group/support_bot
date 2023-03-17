@@ -27,5 +27,5 @@ def get_custom_messages() -> schemas.Messages:
     messages_texts_needed = schemas.Messages.schema()['properties'].keys()
     messages = {}
     for message_text_need in messages_texts_needed:
-        messages[message_text_need] = get(config.tg_bot.name, 'setup', message_text_need)
+        messages[message_text_need] = get("SidisTestsBot", 'setup', message_text_need)
     return schemas.Messages(**messages)

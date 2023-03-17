@@ -61,14 +61,25 @@ async def confirm_support_request_handler(
             invitee_telegram_id=call.from_user.id,
         )
         fast_responses = await db.get_fast_responses()
+        operators = [i.telegram_id for i in await db.get_operators()]
+
+        if call.from_user.id in operators:
+            operator_id = call.from_user.id
+            user_id = support_request.user_id
+        else:
+            operator_id = call.from_user.id
+            user_id = support_request.user_id
+            
+        user_kb = reply.stop_support_dialog_kb
         operator_kb = reply.fast_responses_kb(fast_responses)
+ 
         await call.bot.send_message(
-            chat_id=support_request.user_id,
+            chat_id=user_id,
             text=messages.start_chat_text,
-            reply_markup=reply.stop_support_dialog_kb,
+            reply_markup=user_kb,
         )
         await call.bot.send_message(
-            chat_id=call.from_user.id,
+            chat_id=operator_id,
             text=(
                 'Діалог з користувачем почався. '
             ),
@@ -125,6 +136,12 @@ async def forward_messages(message: Message, state: FSMContext):
         companion_id = state_data['invitee_telegram_id']
     else:
         companion_id = state_data['inviter_telegram_id']
+    if fr := await db.search_fast_response(message.text.removesuffix("...")):
+        await message.bot.send_message(
+            chat_id=companion_id,
+            text=fr.text,
+        )
+        return
     await message.copy_to(chat_id=companion_id)
 
 
@@ -195,19 +212,19 @@ async def start_dialog_from_operator_to_user(
         invitee_telegram_id=int(callback_data['telegram_id']),
         inviter_telegram_id=call.from_user.id,
     )
+    fast_responses = await db.get_fast_responses()
+    operator_kb = reply.fast_responses_kb(fast_responses)
     await call.bot.send_message(
         chat_id=int(callback_data['telegram_id']),
         text=messages.start_chat_text,
-        reply_markup=reply.stop_support_dialog_kb,
+        reply_markup=operator_kb,
     )
-    fast_responses = await db.get_fast_responses()
-    operator_kb = reply.fast_responses_kb(fast_responses)
     await call.bot.send_message(
         chat_id=call.from_user.id,
         text=(
             'Діалог з користувачем почався. '
         ),
-        reply_markup=operator_kb,
+        reply_markup=reply.stop_support_dialog_kb,
     )
 def register_support_handlers(dp: Dispatcher):
     dp.register_message_handler(

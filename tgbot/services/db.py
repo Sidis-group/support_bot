@@ -3,6 +3,8 @@ import uuid
 from asgiref.sync import sync_to_async
 
 from web.app import models
+from django.db.models import F, Value, CharField
+from django.db.models.functions import Replace
 from tgbot.misc import schemas
 
 
@@ -170,6 +172,19 @@ def get_admins_ids() -> list[int]:
         admin.telegram_id \
             for admin in models.Admin.objects.all()
     )
+
+@sync_to_async
+def search_fast_response(part: str) -> schemas.FastResponse:
+    part.rsplit("...", 1)[0]
+    fr = models.FastResponse.objects.annotate(
+    new_field=Replace(F('text'), Value(' '), Value(''), output_field=CharField()),
+    ).annotate(
+        new_field2=Replace(F('new_field'), Value('\n'), Value(''), output_field=CharField()),
+    ) #.filter(new_field2__startswith=part.replace("", "").replace("\n", ""))
+    
+    if not fr or len(part) != 130:
+        return
+    return schemas.FastResponse(**fr.first().dict())
 
 @sync_to_async
 def get_fast_responses() -> list[schemas.FastResponse]:

@@ -34,7 +34,8 @@ class TgBot:
     
     @property
     def webhook_main_url(self):
-        return f'{self.webhook_url}{self.webhook_path}'
+        host = urlparse(self.webhook_url).hostname
+        return f'https://{host}'
 
 
 @dataclass

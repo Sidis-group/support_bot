@@ -183,10 +183,13 @@ async def stop_support_dialog_handler(
     else:
         text_to_support = 'Ви завершили діалог з користувачем'
         text_to_user = 'Оператор завершив діалог з вами'
+
     await (await message.bot.send_message(
-        state_data['invitee_telegram_id'],'d',reply_markup=reply.stop_support_dialog_kb)).delete()
+        state_data['invitee_telegram_id'],'d',reply_markup=reply.remove_kb)).delete()
+
     await (await message.bot.send_message(
-        state_data['inviter_telegram_id'],'d',reply_markup=reply.stop_support_dialog_kb)).delete()
+        state_data['inviter_telegram_id'],'d',reply_markup=reply.remove_kb)).delete()
+
     await message.bot.send_message(
         chat_id=state_data['invitee_telegram_id'],
         text=text_to_support,

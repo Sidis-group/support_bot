@@ -180,7 +180,7 @@ def search_fast_response(part: str) -> schemas.FastResponse:
     new_field=Replace(F('text'), Value(' '), Value(''), output_field=CharField()),
     ).annotate(
         new_field2=Replace(F('new_field'), Value('\n'), Value(''), output_field=CharField()),
-    ) #.filter(new_field2__startswith=part.replace("", "").replace("\n", ""))
+    ).filter(new_field2__startswith=part.replace("", "").replace("\n", ""))
     
     if not fr or len(part) != 130:
         return

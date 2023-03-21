@@ -157,7 +157,7 @@ async def forward_messages(message: Message, state: FSMContext):
     else:
         companion_id = state_data['inviter_telegram_id']
     text = message.text if message.text else ""
-    if fr := await db.search_fast_response(text.removesuffix("...")):
+    if fr := await db.search_fast_response(text):
         await message.bot.send_message(
             chat_id=companion_id,
             text=fr.text,
